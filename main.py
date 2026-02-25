@@ -5,7 +5,7 @@ import os
 import json
 import yaml
 
-@register("phi", "Catrong", "Phigros 信息查询插件", "1.0.0", "https://github.com/Catrong/phi-plugin")
+@register("astrbot-plugin-phi", "Catrong & NiuFuyu855", "Phigros 信息查询插件", "1.0.0", "https://github.com/NiuFuyu855/astrbot-plugin-phi")
 class PhiPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
