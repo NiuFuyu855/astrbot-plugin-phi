@@ -4,25 +4,48 @@ from astrbot.api import logger
 import os
 import json
 import yaml
+import requests
+import random
+import time
 
-@register("astrbot-plugin-phi", "Catrong & NiuFuyu855", "Phigros 信息查询插件", "1.0.0", "https://github.com/NiuFuyu855/astrbot-plugin-phi")
+# 导入组件
+from components.Config import Config
+from components.Logger import Logger
+from components.Version import Version
+from model.constNum import APIBASEURL
+from model.getInfo import getInfo
+
+@register("phi", "Catrong", "Phigros 信息查询插件，支持查询分数等信息统计，以及猜曲目等小游戏", Version.ver, "https://github.com/Catrong/phi-plugin")
 class PhiPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
-        self.data_dir = os.path.join(os.path.dirname(__file__), "data")
+        self.plugin_dir = os.path.dirname(__file__)
+        self.data_dir = os.path.join(self.plugin_dir, "data")
         self.userdata_dir = os.path.join(self.data_dir, "userdata")
         self.cache_dir = os.path.join(self.data_dir, "cache")
         self.backup_dir = os.path.join(self.data_dir, "backup")
-        self.utils_dir = os.path.join(os.path.dirname(__file__), "utils")
         
         # 创建必要的目录
-        for directory in [self.data_dir, self.userdata_dir, self.cache_dir, self.backup_dir, self.utils_dir]:
+        for directory in [self.data_dir, self.userdata_dir, self.cache_dir, self.backup_dir]:
             if not os.path.exists(directory):
                 os.makedirs(directory)
+        
+        # 初始化组件
+        self.config = Config(self.plugin_dir)
+        self.logger = Logger(self.plugin_dir).logger
+        
+        # 初始化信息
+        import asyncio
+        asyncio.create_task(self.init_info())
         
         # 初始化数据
         self.user_data = {}
         self.load_user_data()
+    
+    async def init_info(self):
+        """初始化信息"""
+        await getInfo.init()
+        self.logger.info("PhiPlugin 信息初始化完成")
     
     def load_user_data(self):
         """加载用户数据"""
