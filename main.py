@@ -9,11 +9,11 @@ import random
 import time
 
 # 导入组件
-from components.Config import Config
-from components.Logger import Logger
-from components.Version import Version
-from model.constNum import APIBASEURL
-from model.getInfo import getInfo
+from .components.Config import Config
+from .components.Logger import Logger
+from .components.Version import Version
+from .model.constNum import APIBASEURL
+from .model.getInfo import getInfo
 
 @register("phi", "Catrong", "Phigros 信息查询插件，支持查询分数等信息统计，以及猜曲目等小游戏", Version.ver, "https://github.com/Catrong/phi-plugin")
 class PhiPlugin(Star):
