@@ -1,6 +1,0 @@
-#格式：以别名为键，值为该别名对应的id列表
-#注意：id请使用完整id（含.0结尾）
-
-AM:
-  - AnotherMe.DAAN.0
-  - AnotherMe.NeutralMoon.0
