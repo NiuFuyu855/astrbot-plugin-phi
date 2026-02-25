@@ -1,0 +1,439 @@
+body {
+    overflow: auto;
+    background-color: black;
+}
+
+.background img {
+    width: 100%;
+    height: auto;
+}
+
+.backBlock {
+    margin: 0;
+    padding: 0;
+    height: fit-content;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    overflow: hidden;
+}
+
+.totalBox {
+    /* width: 16000px; */
+    position: relative;
+    display: flex;
+    /* border: 5px solid; */
+}
+
+.rol {
+    width: 250px;
+    margin-right: 200px;
+    margin-left: 50px;
+    position: relative;
+}
+
+.chart-bkg {
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+    display: flex;
+}
+
+.rol-bkg {
+    width: 250px;
+    margin-right: 200px;
+    margin-left: 50px;
+    position: relative;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    background-color: rgba(0, 0, 0, 0.502);
+    backdrop-filter: blur(5px);
+    box-sizing: border-box;
+    pointer-events: none;
+}
+
+.note {
+    width: 0;
+    height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    z-index: 10;
+}
+
+.note img {
+    width: 40px;
+}
+
+.tap {
+    z-index: 15;
+}
+
+.flick {
+    z-index: 14;
+}
+
+.drag {
+    z-index: 13;
+}
+
+.hold-body {
+    position: absolute;
+    bottom: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 39px;
+    /* transform: translateY(-2px); */
+}
+
+.hold-end,
+.hold-head {
+    position: absolute;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hold-head {
+    bottom: -2px;
+}
+
+.hold-end {
+    top: -2px;
+}
+
+.hold-body img,
+.hold-head img,
+.hold-end img {
+    width: 100%;
+}
+
+.hold-body img {
+    height: 100%;
+}
+
+.notestip {
+    position: absolute;
+    white-space: nowrap;
+    z-index: 20;
+    font-size: 10px;
+    text-shadow: white 0 0 2px;
+}
+
+.beats {
+    width: 100%;
+    height: 5px;
+    transform: translateY(50%);
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.1);
+}
+
+.beats-2 {
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.beats-4 {
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+.extended-border-box {
+    border: 3px solid snow;
+    border-radius: 10px;
+    transform: translateX(-50%);
+    z-index: 20;
+    position: absolute;
+}
+
+.extended-box {
+    right: -200px;
+    width: 150px;
+    background-color: rgb(0, 0, 0, 0.4);
+    backdrop-filter: blur(5px);
+    position: absolute;
+}
+/* Beautified labels for beats and notes */
+.beat-label {
+    position: absolute;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+        "Liberation Mono", "Courier New", monospace;
+    font-size: 10px;
+    line-height: 1;
+    color: #e6f0ff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+    padding: 3px 6px;
+    border-radius: 6px;
+    /* background: linear-gradient(
+        135deg,
+        rgba(20, 30, 48, 0.75),
+        rgba(36, 59, 85, 0.75)
+    ); */
+    pointer-events: none;
+    transform: translateY(50%);
+    white-space: nowrap;
+}
+.beat-label.left {
+    left: -30px;
+    border-left: 3px solid rgba(100, 181, 246, 0.8);
+    text-align: center;
+}
+.beat-label.right {
+    right: -50px;
+    border-right: 3px solid rgba(255, 213, 79, 0.85);
+}
+
+.note-fraction {
+    position: absolute;
+    right: -20px;
+    font-size: 8px;
+    color: #fff;
+    /* background: rgba(33, 150, 243, 0.85); */
+    padding: 1px 4px;
+    border-radius: 4px;
+    /* box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4); */
+    pointer-events: none;
+    transform: translateY(50%);
+}
+.beats {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+:root {
+    --text-color-light: #ffffff;
+    --text-color-dark: #000000;
+    --content-title-color: #34c9ff;
+    --box-background-color: #66666699;
+    --box-border-color: #666666;
+}
+
+.info-box {
+    width: 20%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+}
+
+.basic-box {
+    display: flex;
+    width: 100%;
+    height: min-content;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: stretch;
+}
+
+.ill-box {
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.box-title {
+    background-color: var(--box-background-color);
+    display: flex;
+    margin: 0px 0px 10px 0px;
+}
+
+.box-title p {
+    color: var(--text-color-light);
+    font-size: 20px;
+    padding: 0px 20px;
+}
+
+.box-content {
+    width: 100%;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 10px;
+    border: 5px solid var(--box-border-color);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.dot-box .dot {
+    height: 10px;
+    width: 10px;
+    background-color: var(--box-border-color);
+    position: absolute;
+}
+
+.dot-box .left {
+    left: 0;
+}
+
+.dot-box .right {
+    right: 0;
+}
+
+.dot-box .top {
+    top: 0;
+}
+
+.dot-box .bottom {
+    bottom: 0;
+}
+
+.dot-box img {
+    width: 100%;
+}
+
+.basic-info {
+    width: 45%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.box-content p {
+    color: var(--text-color-light);
+    font-size: 20px;
+}
+
+.info-content {
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    background-color: var(--box-background-color);
+    display: flex;
+    flex-direction: row;
+    padding: 5px;
+    align-items: flex-start;
+    justify-content: space-evenly;
+}
+
+.content-item > * {
+    margin: 0px 0px 5px 0px;
+}
+
+.content-title p {
+    font-family: "Aldrich", "PHI";
+    font-size: 60px;
+    color: var(--content-title-color);
+    text-shadow: 1px 1px 5px var(--text-color-dark);
+}
+
+.content p {
+    font-size: 50px;
+    color: var(--text-color-light);
+    text-shadow: 1px 1px 1px var(--text-color-dark);
+    margin: 0px 0px 0px 2rem;
+}
+
+.chart-info {
+    width: 100%;
+    height: 500px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.notes-bar {
+    position: relative;
+    width: 35%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.bar-box {
+    width: 100%;
+    height: 90%;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    border-left: white solid 10px;
+    border-right: white solid 10px;
+    box-sizing: border-box;
+}
+
+.bar {
+    width: 1%;
+    display: flex;
+    flex-direction: column;
+}
+
+.bar-item {
+    width: 100%;
+}
+
+.notes-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.notes-box .content {
+    width: 240px;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.notes-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 120px;
+}
+
+.notes-content p {
+    color: var(--text-color-light);
+}
+
+.notes-content p:nth-child(1) {
+    font-size: 60px;
+}
+
+.notes-content p:nth-child(2) {
+    font-size: 40px;
+    margin-top: -35px;
+}
+
+.tap-p p {
+    color: var(--tap);
+}
+
+.drag-p p {
+    color: var(--drag);
+}
+
+.hold-p p {
+    color: var(--hold);
+}
+
+.flick-p p {
+    color: var(--flick);
+}
+
+.words-box {
+    position: relative;
+    display: flex;
+    width: 18%;
+    height: 100%;
+    flex-direction: column;
+}
+
+.box-tip {position: absolute;right: 0;}
+
+.box-tip p {
+    color: var(--text-color-light);
+    font-size: 50px;
+    text-shadow: 1px 1px 1px var(--text-color-dark);
+}
+
+.words {
+    width: 80%;
+    height: 100%;
+    position: absolute;
+    right: 0;
+}

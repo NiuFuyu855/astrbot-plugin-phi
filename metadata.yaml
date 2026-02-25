@@ -1,5 +1,5 @@
 name: astrbot-plugin-phi
-version: 1.0.0
+version: 1.1.0
 description: Phigros 信息查询插件，支持查询分数等信息统计，以及猜曲目等小游戏
 author: NiuFuyu855 & Catrong
 repository: https://github.com/NiuFuyu855/astrbot-plugin-phi

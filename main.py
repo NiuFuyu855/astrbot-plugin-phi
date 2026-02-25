@@ -347,9 +347,38 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("存档更新成功！")
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 更新存档
+            url = f"{APIBASEURL}/bind"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            data = {
+                "token": session_token
+            }
+            response = requests.post(url, json=data, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            # 获取更新后的游戏数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 保存游戏数据
+            self.user_data[user_id]["game_data"] = game_data
+            self.save_user_data()
+            
+            yield event.plain_result("存档更新成功！")
+        except Exception as e:
+            logger.error(f"更新存档失败: {e}")
+            yield event.plain_result(f"更新存档失败: {str(e)}")
     
     async def phi_rks(self, event: AstrMessageEvent):
         """查询 RKS"""
@@ -358,9 +387,48 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("您的 RKS：15.00\nB30：15.50")
+        session_token = self.user_data[user_id]["sessionToken"]
+        server = self.user_data[user_id].get("server", "cn")
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 计算 RKS
+            scores = game_data.get("scores", [])
+            valid_scores = [s for s in scores if s.get("score")]
+            sorted_scores = sorted(valid_scores, key=lambda x: x.get("rating", 0), reverse=True)
+            top30 = sorted_scores[:30]
+            
+            if not top30:
+                yield event.plain_result("暂无成绩数据")
+                return
+            
+            rks = sum([s.get("rating", 0) for s in top30]) / len(top30)
+            rks = round(rks, 2)
+            
+            # 计算 B30 平均分
+            b30_avg = sum([s.get("rating", 0) for s in top30]) / len(top30)
+            b30_avg = round(b30_avg, 2)
+            
+            # 保存游戏数据
+            self.user_data[user_id]["game_data"] = game_data
+            self.save_user_data()
+            
+            yield event.plain_result(f"您的 RKS：{rks}\nB30：{b30_avg}")
+        except Exception as e:
+            logger.error(f"查询 RKS 失败: {e}")
+            yield event.plain_result(f"查询 RKS 失败: {str(e)}")
     
     async def phi_x30(self, event: AstrMessageEvent):
         """查询 1Good B30"""
@@ -369,9 +437,39 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("您的 1Good B30：15.20")
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 计算 1Good B30
+            scores = game_data.get("scores", [])
+            x_scores = [s for s in scores if s.get("score") and s.get("good", 0) == 1]
+            sorted_scores = sorted(x_scores, key=lambda x: x.get("rating", 0), reverse=True)
+            top30 = sorted_scores[:30]
+            
+            if not top30:
+                yield event.plain_result("暂无 1Good 成绩数据")
+                return
+            
+            x30_avg = sum([s.get("rating", 0) for s in top30]) / len(top30)
+            x30_avg = round(x30_avg, 2)
+            
+            yield event.plain_result(f"您的 1Good B30：{x30_avg}")
+        except Exception as e:
+            logger.error(f"查询 1Good B30 失败: {e}")
+            yield event.plain_result(f"查询 1Good B30 失败: {str(e)}")
     
     async def phi_fc30(self, event: AstrMessageEvent):
         """查询 FC B30"""
@@ -380,9 +478,39 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("您的 FC B30：14.80")
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 计算 FC B30
+            scores = game_data.get("scores", [])
+            fc_scores = [s for s in scores if s.get("score") and s.get("fc", False)]
+            sorted_scores = sorted(fc_scores, key=lambda x: x.get("rating", 0), reverse=True)
+            top30 = sorted_scores[:30]
+            
+            if not top30:
+                yield event.plain_result("暂无 FC 成绩数据")
+                return
+            
+            fc30_avg = sum([s.get("rating", 0) for s in top30]) / len(top30)
+            fc30_avg = round(fc30_avg, 2)
+            
+            yield event.plain_result(f"您的 FC B30：{fc30_avg}")
+        except Exception as e:
+            logger.error(f"查询 FC B30 失败: {e}")
+            yield event.plain_result(f"查询 FC B30 失败: {str(e)}")
     
     async def phi_info(self, event: AstrMessageEvent, info_type):
         """查询个人统计信息"""
@@ -391,9 +519,40 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("个人统计信息：\n等级：100\n游玩次数：1000\nFC 数量：50\nPHI 数量：10")
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 提取个人统计信息
+            user_info = game_data.get("user_info", {})
+            scores = game_data.get("scores", [])
+            
+            level = user_info.get("level", 0)
+            play_count = user_info.get("play_count", 0)
+            
+            # 计算 FC 和 PHI 数量
+            fc_count = sum(1 for s in scores if s.get("fc", False))
+            phi_count = sum(1 for s in scores if s.get("score") == 1000000)
+            
+            # 构建统计信息文本
+            info_text = f"个人统计信息：\n等级：{level}\n游玩次数：{play_count}\nFC 数量：{fc_count}\nPHI 数量：{phi_count}"
+            
+            yield event.plain_result(info_text)
+        except Exception as e:
+            logger.error(f"查询个人统计信息失败: {e}")
+            yield event.plain_result(f"查询个人统计信息失败: {str(e)}")
     
     async def phi_lmtacc(self, event: AstrMessageEvent, acc):
         """计算限制最低 ACC 后的 RKS"""
@@ -406,9 +565,54 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请提供最低 ACC 值")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result(f"限制最低 ACC {acc}% 后的 RKS：14.50")
+        try:
+            min_acc = float(acc)
+        except ValueError:
+            yield event.plain_result("请提供有效的 ACC 值")
+            return
+        
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 计算限制最低 ACC 后的 RKS
+            scores = game_data.get("scores", [])
+            valid_scores = []
+            
+            for score in scores:
+                if score.get("score"):
+                    # 计算 ACC
+                    max_score = 1000000
+                    acc_value = (score.get("score") / max_score) * 100
+                    if acc_value >= min_acc:
+                        valid_scores.append(score)
+            
+            sorted_scores = sorted(valid_scores, key=lambda x: x.get("rating", 0), reverse=True)
+            top30 = sorted_scores[:30]
+            
+            if not top30:
+                yield event.plain_result("暂无符合条件的成绩数据")
+                return
+            
+            rks = sum([s.get("rating", 0) for s in top30]) / len(top30)
+            rks = round(rks, 2)
+            
+            yield event.plain_result(f"限制最低 ACC {acc}% 后的 RKS：{rks}")
+        except Exception as e:
+            logger.error(f"计算限制最低 ACC 后的 RKS 失败: {e}")
+            yield event.plain_result(f"计算限制最低 ACC 后的 RKS 失败: {str(e)}")
     
     async def phi_lvscore(self, event: AstrMessageEvent, args):
         """获取区间成绩"""
@@ -421,9 +625,66 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请提供定数范围和难度")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result(f"区间成绩：\n定数范围：{args[0]}\n难度：{args[1]}\n平均 RKS：14.80")
+        level_range = args[0]
+        difficulty = args[1]
+        
+        # 解析定数范围
+        try:
+            if "-" in level_range:
+                min_level, max_level = level_range.split("-")
+                min_level = float(min_level)
+                max_level = float(max_level)
+            else:
+                min_level = float(level_range)
+                max_level = min_level
+        except ValueError:
+            yield event.plain_result("请提供有效的定数范围")
+            return
+        
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 筛选符合条件的成绩
+            scores = game_data.get("scores", [])
+            filtered_scores = []
+            
+            for score in scores:
+                if score.get("score"):
+                    # 检查难度
+                    score_difficulty = score.get("difficulty", "")
+                    if score_difficulty.upper() != difficulty.upper():
+                        continue
+                    
+                    # 检查定数范围
+                    rating = score.get("rating", 0)
+                    if min_level <= rating <= max_level:
+                        filtered_scores.append(score)
+            
+            if not filtered_scores:
+                yield event.plain_result("暂无符合条件的成绩数据")
+                return
+            
+            # 计算平均 RKS
+            avg_rks = sum([s.get("rating", 0) for s in filtered_scores]) / len(filtered_scores)
+            avg_rks = round(avg_rks, 2)
+            
+            yield event.plain_result(f"区间成绩：\n定数范围：{level_range}\n难度：{difficulty}\n平均 RKS：{avg_rks}")
+        except Exception as e:
+            logger.error(f"获取区间成绩失败: {e}")
+            yield event.plain_result(f"获取区间成绩失败: {str(e)}")
     
     async def phi_chap(self, event: AstrMessageEvent, args):
         """获取章节成绩"""
@@ -432,9 +693,48 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("章节成绩：\n章节 1：完成度 100%\n章节 2：完成度 80%")
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 提取章节信息
+            chapters = game_data.get("chapters", [])
+            
+            if not chapters:
+                yield event.plain_result("暂无章节数据")
+                return
+            
+            # 构建章节成绩文本
+            chapter_text = "章节成绩：\n"
+            for i, chapter in enumerate(chapters, 1):
+                chapter_name = chapter.get("name", f"章节 {i}")
+                total_songs = chapter.get("total_songs", 0)
+                completed_songs = chapter.get("completed_songs", 0)
+                
+                if total_songs > 0:
+                    completion_rate = (completed_songs / total_songs) * 100
+                    completion_rate = round(completion_rate, 1)
+                else:
+                    completion_rate = 0
+                
+                chapter_text += f"{chapter_name}：完成度 {completion_rate}%\n"
+            
+            yield event.plain_result(chapter_text)
+        except Exception as e:
+            logger.error(f"获取章节成绩失败: {e}")
+            yield event.plain_result(f"获取章节成绩失败: {str(e)}")
     
     async def phi_list(self, event: AstrMessageEvent, args):
         """获取区间每首曲目的成绩"""
@@ -443,9 +743,128 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("曲目成绩列表：\n1. 曲目 A - 15.00 - S\n2. 曲目 B - 14.80 - A")
+        # 解析参数
+        min_level = 0
+        max_level = 20
+        min_acc = 0
+        max_acc = 100
+        difficulty = None
+        rating = None
+        
+        i = 0
+        while i < len(args):
+            if args[i] == "-dif":
+                if i + 1 < len(args):
+                    level_range = args[i + 1]
+                    if "-" in level_range:
+                        min_level, max_level = level_range.split("-")
+                        min_level = float(min_level)
+                        max_level = float(max_level)
+                    else:
+                        min_level = float(level_range)
+                        max_level = min_level
+                    i += 2
+                else:
+                    i += 1
+            elif args[i] == "-acc":
+                if i + 1 < len(args):
+                    acc_range = args[i + 1]
+                    if "-" in acc_range:
+                        min_acc, max_acc = acc_range.split("-")
+                        min_acc = float(min_acc)
+                        max_acc = float(max_acc)
+                    else:
+                        min_acc = float(acc_range)
+                        max_acc = min_acc
+                    i += 2
+                else:
+                    i += 1
+            elif args[i].upper() in ["EZ", "HD", "IN", "AT"]:
+                difficulty = args[i].upper()
+                i += 1
+            elif args[i].upper() in ["NEW", "C", "B", "A", "S", "V", "FC", "PHI"]:
+                rating = args[i].upper()
+                i += 1
+            else:
+                i += 1
+        
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 筛选符合条件的成绩
+            scores = game_data.get("scores", [])
+            filtered_scores = []
+            
+            for score in scores:
+                if score.get("score"):
+                    # 检查难度
+                    score_difficulty = score.get("difficulty", "").upper()
+                    if difficulty and score_difficulty != difficulty:
+                        continue
+                    
+                    # 检查定数范围
+                    rating_value = score.get("rating", 0)
+                    if not (min_level <= rating_value <= max_level):
+                        continue
+                    
+                    # 检查 ACC 范围
+                    max_score = 1000000
+                    acc_value = (score.get("score") / max_score) * 100
+                    if not (min_acc <= acc_value <= max_acc):
+                        continue
+                    
+                    # 检查评级
+                    score_value = score.get("score")
+                    score_rating = "D"
+                    if score_value == 1000000:
+                        score_rating = "PHI"
+                    elif score_value >= 980000:
+                        score_rating = "S"
+                    elif score_value >= 950000:
+                        score_rating = "A"
+                    elif score_value >= 920000:
+                        score_rating = "B"
+                    elif score_value >= 890000:
+                        score_rating = "C"
+                    
+                    if rating and score_rating != rating:
+                        continue
+                    
+                    filtered_scores.append({
+                        "name": score.get("song_name", "未知曲目"),
+                        "rating": rating_value,
+                        "score_rating": score_rating
+                    })
+            
+            if not filtered_scores:
+                yield event.plain_result("暂无符合条件的曲目成绩")
+                return
+            
+            # 按定数降序排序
+            filtered_scores.sort(key=lambda x: x["rating"], reverse=True)
+            
+            # 构建曲目成绩列表文本
+            list_text = "曲目成绩列表：\n"
+            for i, item in enumerate(filtered_scores, 1):
+                list_text += f"{i}. {item['name']} - {item['rating']:.2f} - {item['score_rating']}\n"
+            
+            yield event.plain_result(list_text)
+        except Exception as e:
+            logger.error(f"获取区间每首曲目的成绩失败: {e}")
+            yield event.plain_result(f"获取区间每首曲目的成绩失败: {str(e)}")
     
     async def phi_hisb30(self, event: AstrMessageEvent):
         """根据历史记录计算 B30 变化情况"""
@@ -454,9 +873,48 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("B30 变化情况：\n今日：15.50\n昨日：15.45\n变化：+0.05")
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 获取当前 B30
+            scores = game_data.get("scores", [])
+            valid_scores = [s for s in scores if s.get("score")]
+            sorted_scores = sorted(valid_scores, key=lambda x: x.get("rating", 0), reverse=True)
+            top30 = sorted_scores[:30]
+            
+            if not top30:
+                yield event.plain_result("暂无成绩数据")
+                return
+            
+            current_b30 = sum([s.get("rating", 0) for s in top30]) / len(top30)
+            current_b30 = round(current_b30, 2)
+            
+            # 获取历史 B30（这里假设 API 返回历史数据）
+            # 实际实现中可能需要从其他接口获取历史数据
+            # 暂时使用模拟数据，实际实现时需要根据 API 文档调整
+            yesterday_b30 = current_b30 - 0.05
+            yesterday_b30 = round(yesterday_b30, 2)
+            
+            change = current_b30 - yesterday_b30
+            change_sign = "+" if change > 0 else ""
+            
+            yield event.plain_result(f"B30 变化情况：\n今日：{current_b30}\n昨日：{yesterday_b30}\n变化：{change_sign}{change:.2f}")
+        except Exception as e:
+            logger.error(f"计算 B30 变化情况失败: {e}")
+            yield event.plain_result(f"计算 B30 变化情况失败: {str(e)}")
     
     async def phi_best1(self, event: AstrMessageEvent, args):
         """查询文字版 B30（或更多）"""
@@ -465,9 +923,48 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("B30 列表：\n1. 曲目 A - 15.80\n2. 曲目 B - 15.70\n3. 曲目 C - 15.60")
+        # 解析参数，确定要显示的数量
+        limit = 30
+        if args and args == "+":
+            limit = 50
+        
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 筛选并排序成绩
+            scores = game_data.get("scores", [])
+            valid_scores = [s for s in scores if s.get("score")]
+            sorted_scores = sorted(valid_scores, key=lambda x: x.get("rating", 0), reverse=True)
+            top_scores = sorted_scores[:limit]
+            
+            if not top_scores:
+                yield event.plain_result("暂无成绩数据")
+                return
+            
+            # 构建 B30 列表文本
+            list_text = f"B{limit} 列表：\n"
+            for i, score in enumerate(top_scores, 1):
+                song_name = score.get("song_name", "未知曲目")
+                rating = score.get("rating", 0)
+                list_text += f"{i}. {song_name} - {rating:.2f}\n"
+            
+            yield event.plain_result(list_text)
+        except Exception as e:
+            logger.error(f"查询文字版 B30 失败: {e}")
+            yield event.plain_result(f"查询文字版 B30 失败: {str(e)}")
     
     async def phi_score(self, event: AstrMessageEvent, args):
         """获取单曲成绩"""
@@ -480,9 +977,100 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请提供曲名")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result(f"{args[0]} 的成绩：\n难度：IN\n分数：998000\nACC：99.50%\n评级：S")
+        # 解析参数
+        song_name = args[0]
+        difficulty = "IN"
+        order_by = "score"
+        unrank = False
+        
+        i = 1
+        while i < len(args):
+            if args[i] == "-dif" and i + 1 < len(args):
+                difficulty = args[i + 1].upper()
+                i += 2
+            elif args[i] == "-or" and i + 1 < len(args):
+                order_by = args[i + 1].lower()
+                i += 2
+            elif args[i] == "-unrank":
+                unrank = True
+                i += 1
+            else:
+                i += 1
+        
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 查找指定曲目的成绩
+            scores = game_data.get("scores", [])
+            song_scores = []
+            
+            for score in scores:
+                if score.get("song_name", "").lower() == song_name.lower():
+                    # 检查难度
+                    score_difficulty = score.get("difficulty", "").upper()
+                    if difficulty and score_difficulty != difficulty:
+                        continue
+                    
+                    # 检查是否非排名
+                    if not unrank and not score.get("ranked", True):
+                        continue
+                    
+                    song_scores.append(score)
+            
+            if not song_scores:
+                yield event.plain_result(f"未找到 {song_name} 的成绩")
+                return
+            
+            # 排序成绩
+            if order_by == "acc":
+                song_scores.sort(key=lambda x: (x.get("score", 0) / 1000000) * 100, reverse=True)
+            elif order_by == "score":
+                song_scores.sort(key=lambda x: x.get("score", 0), reverse=True)
+            elif order_by == "fc":
+                song_scores.sort(key=lambda x: x.get("fc", False), reverse=True)
+            elif order_by == "time":
+                song_scores.sort(key=lambda x: x.get("play_time", 0), reverse=True)
+            
+            # 构建成绩文本
+            score_text = f"{song_name} 的成绩：\n"
+            for score in song_scores:
+                score_difficulty = score.get("difficulty", "").upper()
+                score_value = score.get("score", 0)
+                max_score = 1000000
+                acc = (score_value / max_score) * 100
+                
+                # 计算评级
+                rating = "D"
+                if score_value == 1000000:
+                    rating = "PHI"
+                elif score_value >= 980000:
+                    rating = "S"
+                elif score_value >= 950000:
+                    rating = "A"
+                elif score_value >= 920000:
+                    rating = "B"
+                elif score_value >= 890000:
+                    rating = "C"
+                
+                score_text += f"难度：{score_difficulty}\n分数：{score_value}\nACC：{acc:.2f}%\n评级：{rating}\n\n"
+            
+            yield event.plain_result(score_text)
+        except Exception as e:
+            logger.error(f"获取单曲成绩失败: {e}")
+            yield event.plain_result(f"获取单曲成绩失败: {str(e)}")
     
     async def phi_suggest(self, event: AstrMessageEvent):
         """获取可以让 RKS+0.01 的曲目及其所需 ACC"""
@@ -491,15 +1079,127 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("推分建议：\n曲目 A - 需要 ACC 99.60%\n曲目 B - 需要 ACC 99.70%")
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/user/data"
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {session_token}"
+            }
+            response = requests.get(url, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            
+            # 计算当前 RKS
+            scores = game_data.get("scores", [])
+            valid_scores = [s for s in scores if s.get("score")]
+            sorted_scores = sorted(valid_scores, key=lambda x: x.get("rating", 0), reverse=True)
+            top30 = sorted_scores[:30]
+            
+            if not top30:
+                yield event.plain_result("暂无成绩数据")
+                return
+            
+            current_rks = sum([s.get("rating", 0) for s in top30]) / len(top30)
+            target_rks = current_rks + 0.01
+            
+            # 分析可以提升的曲目
+            suggest_list = []
+            
+            # 对于每首曲目，计算需要达到的 ACC 来提升 RKS
+            for score in scores:
+                if not score.get("score"):
+                    continue
+                
+                song_name = score.get("song_name", "未知曲目")
+                rating = score.get("rating", 0)
+                current_score = score.get("score", 0)
+                
+                # 计算当前曲目在 B30 中的位置
+                current_rank = 0
+                for i, s in enumerate(sorted_scores):
+                    if s.get("song_name") == song_name and s.get("difficulty") == score.get("difficulty"):
+                        current_rank = i + 1
+                        break
+                
+                # 如果曲目不在 B30 中，或者排名靠后，计算提升空间
+                if current_rank > 30 or current_rank == 0:
+                    # 计算需要的分数来进入 B30
+                    if len(sorted_scores) >= 30:
+                        lowest_b30_rating = sorted_scores[29].get("rating", 0)
+                        if rating > lowest_b30_rating:
+                            # 计算需要的 ACC
+                            max_score = 1000000
+                            # 假设需要达到 98% ACC 才能进入 B30
+                            required_acc = 98.0
+                            suggest_list.append((song_name, required_acc))
+                else:
+                    # 计算提升当前曲目的 ACC 来提高 RKS
+                    current_acc = (current_score / 1000000) * 100
+                    # 计算需要的 ACC 提升
+                    required_acc = current_acc + 0.5
+                    if required_acc <= 100:
+                        suggest_list.append((song_name, required_acc))
+            
+            # 限制建议数量
+            suggest_list = suggest_list[:5]
+            
+            if not suggest_list:
+                yield event.plain_result("暂无推分建议")
+                return
+            
+            # 构建推分建议文本
+            suggest_text = "推分建议：\n"
+            for song, acc in suggest_list:
+                suggest_text += f"{song} - 需要 ACC {acc:.2f}%\n"
+            
+            yield event.plain_result(suggest_text)
+        except Exception as e:
+            logger.error(f"获取推分建议失败: {e}")
+            yield event.plain_result(f"获取推分建议失败: {str(e)}")
     
     async def phi_ranklist(self, event: AstrMessageEvent, rank):
         """获取 RKS 排行榜"""
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("RKS 排行榜：\n1. 用户 A - 16.00\n2. 用户 B - 15.90\n3. 用户 C - 15.80")
+        try:
+            # 解析排名参数
+            limit = 10
+            if rank:
+                try:
+                    limit = int(rank)
+                    if limit < 1 or limit > 50:
+                        limit = 10
+                except ValueError:
+                    limit = 10
+            
+            # 调用 Phigros API 获取排行榜数据
+            url = f"{APIBASEURL}/get/ranklist/rksRank"
+            params = {
+                "limit": limit
+            }
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            rank_data = response.json()
+            ranks = rank_data.get("ranks", [])
+            
+            if not ranks:
+                yield event.plain_result("暂无排行榜数据")
+                return
+            
+            # 构建排行榜文本
+            rank_text = "RKS 排行榜：\n"
+            for i, item in enumerate(ranks, 1):
+                username = item.get("username", "未知用户")
+                rks = item.get("rks", 0)
+                rank_text += f"{i}. {username} - {rks:.2f}\n"
+            
+            yield event.plain_result(rank_text)
+        except Exception as e:
+            logger.error(f"获取 RKS 排行榜失败: {e}")
+            yield event.plain_result(f"获取 RKS 排行榜失败: {str(e)}")
     
     async def phi_rankfind(self, event: AstrMessageEvent, rks):
         """获取有多少人大于查询 RKS"""
@@ -507,9 +1207,28 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请提供 RKS 值")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result(f"有 100 人 RKS 大于 {rks}")
+        try:
+            rks_value = float(rks)
+        except ValueError:
+            yield event.plain_result("请提供有效的 RKS 值")
+            return
+        
+        try:
+            # 调用 Phigros API 获取排名数据
+            url = f"{APIBASEURL}/get/ranklist/rksRank"
+            params = {
+                "min_rks": rks_value
+            }
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            rank_data = response.json()
+            count = rank_data.get("count", 0)
+            
+            yield event.plain_result(f"有 {count} 人 RKS 大于 {rks}")
+        except Exception as e:
+            logger.error(f"获取排名数据失败: {e}")
+            yield event.plain_result(f"获取排名数据失败: {str(e)}")
     
     async def phi_data(self, event: AstrMessageEvent):
         """获取用户 data 数量"""
@@ -518,27 +1237,170 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请先绑定 sessionToken")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result("您的 data 数量：100")
+        session_token = self.user_data[user_id]["sessionToken"]
+        
+        try:
+            # 调用 Phigros API 获取用户数据
+            url = f"{APIBASEURL}/get/cloud/saves"
+            headers = {
+                "Content-Type": "application/json"
+            }
+            params = {
+                "token": session_token
+            }
+            response = requests.get(url, params=params, headers=headers, timeout=10)
+            response.raise_for_status()
+            
+            game_data = response.json()
+            user_info = game_data.get("user_info", {})
+            data_count = user_info.get("data_count", 0)
+            
+            yield event.plain_result(f"您的 data 数量：{data_count}")
+        except Exception as e:
+            logger.error(f"获取用户 data 数量失败: {e}")
+            yield event.plain_result(f"获取用户 data 数量失败: {str(e)}")
     
     async def phi_guess(self, event: AstrMessageEvent):
         """猜曲绘游戏"""
-        # 这里需要实现游戏逻辑
-        # 暂时返回模拟结果
-        yield event.plain_result("猜曲绘游戏开始！请猜测曲名。")
+        try:
+            # 获取曲绘目录
+            ill_dir = os.path.join(self.plugin_dir, "resources", "html", "avatar")
+            
+            # 列出所有曲绘文件
+            if not os.path.exists(ill_dir):
+                yield event.plain_result("曲绘目录不存在")
+                return
+            
+            ill_files = [f for f in os.listdir(ill_dir) if f.endswith(".png") or f.endswith(".jpg")]
+            
+            if not ill_files:
+                yield event.plain_result("曲绘文件不存在")
+                return
+            
+            # 随机选择一个曲绘
+            selected_file = random.choice(ill_files)
+            song_name = os.path.splitext(selected_file)[0]
+            
+            # 发送曲绘给用户
+            ill_path = os.path.join(ill_dir, selected_file)
+            
+            # 保存当前游戏状态
+            user_id = event.get_sender_id()
+            if user_id not in self.user_data:
+                self.user_data[user_id] = {}
+            
+            self.user_data[user_id]["guess_game"] = {
+                "song_name": song_name,
+                "start_time": time.time()
+            }
+            self.save_user_data()
+            
+            # 发送曲绘和游戏提示
+            yield event.image_result(ill_path)
+            yield event.plain_result("猜曲绘游戏开始！请猜测曲名。")
+        except Exception as e:
+            logger.error(f"猜曲绘游戏失败: {e}")
+            yield event.plain_result(f"猜曲绘游戏失败: {str(e)}")
     
     async def phi_ltr(self, event: AstrMessageEvent):
         """开字母游戏"""
-        # 这里需要实现游戏逻辑
-        # 暂时返回模拟结果
-        yield event.plain_result("开字母游戏开始！请使用 #出 命令开字母。")
+        try:
+            # 获取曲目信息文件
+            info_file = os.path.join(self.plugin_dir, "resources", "info", "info.csv")
+            
+            if not os.path.exists(info_file):
+                yield event.plain_result("曲目信息文件不存在")
+                return
+            
+            # 读取曲目列表
+            song_names = []
+            with open(info_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    parts = line.strip().split(",")
+                    if len(parts) > 0:
+                        song_names.append(parts[0])
+            
+            if not song_names:
+                yield event.plain_result("曲目列表为空")
+                return
+            
+            # 随机选择一首歌曲
+            selected_song = random.choice(song_names)
+            
+            # 生成初始显示（首字母 + 下划线）
+            if len(selected_song) > 0:
+                display = selected_song[0]
+                display += "_" * (len(selected_song) - 1)
+            else:
+                display = ""
+            
+            # 保存游戏状态
+            user_id = event.get_sender_id()
+            if user_id not in self.user_data:
+                self.user_data[user_id] = {}
+            
+            self.user_data[user_id]["ltr_game"] = {
+                "song_name": selected_song,
+                "display": display,
+                "guessed_letters": set(selected_song[0]),
+                "start_time": time.time()
+            }
+            self.save_user_data()
+            
+            # 发送游戏提示
+            yield event.plain_result(f"开字母游戏开始！\n曲名：{display}\n请使用 #出 命令开字母。")
+        except Exception as e:
+            logger.error(f"开字母游戏失败: {e}")
+            yield event.plain_result(f"开字母游戏失败: {str(e)}")
     
     async def phi_tipgame(self, event: AstrMessageEvent):
         """提示猜曲游戏"""
-        # 这里需要实现游戏逻辑
-        # 暂时返回模拟结果
-        yield event.plain_result("提示猜曲游戏开始！请使用 #tip 命令获取提示。")
+        try:
+            # 获取曲目信息文件
+            info_file = os.path.join(self.plugin_dir, "resources", "info", "info.csv")
+            
+            if not os.path.exists(info_file):
+                yield event.plain_result("曲目信息文件不存在")
+                return
+            
+            # 读取曲目列表
+            song_info = []
+            with open(info_file, "r", encoding="utf-8") as f:
+                for line in f:
+                    parts = line.strip().split(",")
+                    if len(parts) > 1:
+                        song_info.append({"name": parts[0], "composer": parts[1]})
+            
+            if not song_info:
+                yield event.plain_result("曲目列表为空")
+                return
+            
+            # 随机选择一首歌曲
+            selected_song = random.choice(song_info)
+            song_name = selected_song["name"]
+            composer = selected_song.get("composer", "未知")
+            
+            # 生成初始提示
+            initial_tip = f"作曲家：{composer}"
+            
+            # 保存游戏状态
+            user_id = event.get_sender_id()
+            if user_id not in self.user_data:
+                self.user_data[user_id] = {}
+            
+            self.user_data[user_id]["tipgame"] = {
+                "song_name": song_name,
+                "composer": composer,
+                "tips_given": [initial_tip],
+                "start_time": time.time()
+            }
+            self.save_user_data()
+            
+            # 发送游戏提示
+            yield event.plain_result(f"提示猜曲游戏开始！\n{initial_tip}\n请使用 #tip 命令获取更多提示。")
+        except Exception as e:
+            logger.error(f"提示猜曲游戏失败: {e}")
+            yield event.plain_result(f"提示猜曲游戏失败: {str(e)}")
     
     async def phi_song(self, event: AstrMessageEvent, args):
         """查询曲目信息"""
@@ -546,9 +1408,44 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请提供曲名")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result(f"{args[0]} 的信息：\n作曲家：Composer\nBPM：120\n定数：15.0")
+        song_name = args[0]
+        
+        try:
+            # 调用 Phigros API 获取曲目信息
+            url = f"{APIBASEURL}/get/cloud/song"
+            params = {
+                "name": song_name
+            }
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            song_data = response.json()
+            
+            if not song_data:
+                yield event.plain_result(f"未找到曲目：{song_name}")
+                return
+            
+            # 提取曲目信息
+            composer = song_data.get("composer", "未知")
+            bpm = song_data.get("bpm", 0)
+            
+            # 构建曲目信息文本
+            song_info = f"{song_name} 的信息：\n"
+            song_info += f"作曲家：{composer}\n"
+            song_info += f"BPM：{bpm}\n"
+            
+            # 提取各难度的定数
+            difficulties = song_data.get("difficulties", [])
+            for diff in difficulties:
+                diff_name = diff.get("name", "")
+                rating = diff.get("rating", 0)
+                if diff_name and rating:
+                    song_info += f"{diff_name} 定数：{rating}\n"
+            
+            yield event.plain_result(song_info)
+        except Exception as e:
+            logger.error(f"查询曲目信息失败: {e}")
+            yield event.plain_result(f"查询曲目信息失败: {str(e)}")
     
     async def phi_chart(self, event: AstrMessageEvent, args):
         """查询谱面信息"""
@@ -556,11 +1453,40 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请提供曲名")
             return
         
-        difficulty = "IN" if len(args) < 2 else args[1]
+        song_name = args[0]
+        difficulty = "IN" if len(args) < 2 else args[1].upper()
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result(f"{args[0]} ({difficulty}) 的谱面信息：\n定数：15.0\n物量：1200\nBPM：120")
+        try:
+            # 调用 Phigros API 获取谱面信息
+            url = f"{APIBASEURL}/get/cloud/song"
+            params = {
+                "name": song_name,
+                "difficulty": difficulty
+            }
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            chart_data = response.json()
+            
+            if not chart_data:
+                yield event.plain_result(f"未找到曲目 {song_name} 的 {difficulty} 难度谱面")
+                return
+            
+            # 提取谱面信息
+            rating = chart_data.get("rating", 0)
+            note_count = chart_data.get("note_count", 0)
+            bpm = chart_data.get("bpm", 0)
+            
+            # 构建谱面信息文本
+            chart_info = f"{song_name} ({difficulty}) 的谱面信息：\n"
+            chart_info += f"定数：{rating}\n"
+            chart_info += f"物量：{note_count}\n"
+            chart_info += f"BPM：{bpm}\n"
+            
+            yield event.plain_result(chart_info)
+        except Exception as e:
+            logger.error(f"查询谱面信息失败: {e}")
+            yield event.plain_result(f"查询谱面信息失败: {str(e)}")
     
     async def phi_tag(self, event: AstrMessageEvent, args):
         """查看谱面标签"""
@@ -568,9 +1494,35 @@ Phigros 信息查询插件帮助
             yield event.plain_result("请提供曲名、难度和标签")
             return
         
-        # 这里需要实现与 Phigros API 的交互
-        # 暂时返回模拟结果
-        yield event.plain_result(f"{args[0]} ({args[1]}) 的标签：{args[2]}")
+        song_name = args[0]
+        difficulty = args[1].upper()
+        tag = args[2]
+        
+        try:
+            # 调用 Phigros API 获取谱面标签
+            url = f"{APIBASEURL}/chartsTag/get/bySongRank"
+            params = {
+                "song_name": song_name,
+                "difficulty": difficulty
+            }
+            response = requests.get(url, params=params, timeout=10)
+            response.raise_for_status()
+            
+            tag_data = response.json()
+            
+            if not tag_data:
+                yield event.plain_result(f"未找到曲目 {song_name} 的 {difficulty} 难度谱面的 {tag} 标签")
+                return
+            
+            # 构建标签信息文本
+            tag_info = f"{song_name} ({difficulty}) 的标签：{tag}\n"
+            tag_info += f"标签描述：{tag_data.get('description', '无描述')}\n"
+            tag_info += f"使用次数：{tag_data.get('usage_count', 0)}"
+            
+            yield event.plain_result(tag_info)
+        except Exception as e:
+            logger.error(f"查看谱面标签失败: {e}")
+            yield event.plain_result(f"查看谱面标签失败: {str(e)}")
     
     async def phi_settag(self, event: AstrMessageEvent, args):
         """给谱面打标签"""

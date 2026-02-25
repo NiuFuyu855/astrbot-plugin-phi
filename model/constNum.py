@@ -1,5 +1,5 @@
 # API 基础地址
-APIBASEURL = "https://api.phigros.net"
+APIBASEURL = "https://phib19.top:8080"
 
 # 难度映射
 DIFFICULTY_MAP = {

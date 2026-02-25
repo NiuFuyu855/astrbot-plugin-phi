@@ -1,0 +1,137 @@
+#  ************ 【渲染设置】 *************
+#  渲染精细度，可选值50~200，建议100。设置高精度会提高图片的精细度，但因图片较大可能会影响渲染与发送速度
+renderScale: 100
+
+#  渲染质量 可选值50~100
+randerQuality: 100
+
+#  渲染超时时间 ms
+timeout: 20000
+
+#  等待渲染超时时间 ms
+waitingTimeout: 10000
+
+#  并行渲染数量
+renderNum: 1
+
+#  每页最大渲染评论数量
+commentsAPage: 10
+
+#  b19最大成绩数量
+B19MaxNum: 50
+
+#  历史成绩单日数量，至少为2
+HistoryDayNum: 10
+
+#  历史成绩总数量
+HistoryScoreNum: 50
+
+#  历史成绩展示天数
+HistoryScoreDate: 10
+
+#  /list 最大渲染成绩数量
+listScoreMaxNum: 180
+
+#  ************ 【系统设置】 *************
+
+#  默认使用国际服
+defaultGlobal: false
+
+#  是否监听信息文件变化，如遇监听文件超限请尝试关闭
+watchInfoPath: false
+
+#  是否开启曲目评论功能，该功能目前暂无敏感词校验
+allowComment: true
+
+#  是否开启谱面标签功能，该功能目前暂无敏感词校验
+allowChartTag: false
+
+#  在线曲绘地址
+onLinePhiIllUrl: "https://gh-proxy.com/https://raw.githubusercontent.com/Catrong/phi-plugin-ill/main"
+
+#  下载曲绘地址
+downIllUrl: "https://gh-proxy.com/https://github.com/Catrong/phi-plugin-ill.git"
+
+#  是否在更新插件时自动拉取最新曲绘
+autoPullPhiIll: false
+
+#  是否开启频道模式（文字版仅限私聊，关闭文字版图片，文字版将折叠为一条消息，把@改为回复）
+isGuild: false
+
+#  文字版b19是否带图，关闭可以节约大量发送时间
+WordB19Img: false
+
+#  文字版suggest是否带图，关闭可以节约大量发送时间
+WordSuggImg: false
+
+#  登录TapTap绑定是否发送二维码
+TapTapLoginQRcode: true
+
+#  命令头
+cmdhead: "phi"
+
+#  Phigros更新信息API地址
+phigrousUpdateUrl: "https://phiupdateinfo.pmya.xyz/"
+
+#  是否启用Phigros联合查分API
+openPhiPluginApi: true
+
+#  检测API状态成功后，是否自动开启API
+autoOpenApi: true
+
+#  输出测试日志
+debug: 0
+
+#  谱面文件路径
+chartPath: ''
+
+#  多个曲目回复序号等待时长(s)
+mutiNickWaitTimeOut: 10
+
+#  ************ 【娱乐设置】 *************
+#  是否启用额外曲库 0:原本 1:原本+额外 2:仅额外
+otherinfo: 0
+
+#  ************ 【猜字母设置】 *************
+#  猜字母条数
+LetterNum: 8
+
+#  猜对后是否发送以及发送什么曲绘 原版 水印版 不发送
+LetterIllustration: "水印版"
+
+#  猜字母群聊全局猜测冷却时间间隔(s)
+LetterGuessCd: 0
+
+#  猜字母群聊全局翻开字母冷却时间间隔(s)
+LetterRevealCd: 0
+
+#  猜字母群聊全局提示冷却时间间隔(s)
+LetterTipCd: 0
+
+#  猜字母待机时长(s)
+LetterTimeLength: 300
+
+#  ************ 【猜曲绘设置】 *************
+#  猜曲绘是否撤回
+GuessTipRecall: false
+
+#  猜曲绘提示时间间隔(s)
+GuessTipCd: 15
+
+#  ************ 【提示猜歌设置】 *************
+#  提示猜歌提示的冷却时间间隔(s)
+GuessTipsTipCD: 5
+
+#  提示猜歌的提示条数（除曲绘外）
+GuessTipsTipNum: 6
+
+#  提示猜歌超时时长(s)
+GuessTipsTimeout: 600
+
+#  发送曲绘后多久公布答案(s)
+GuessTipsAnsTime: 30
+
+#  ************ 【其他设置】 *************
+#  认证 Token
+VikaToken: ""
+
