@@ -1,0 +1,13 @@
+{
+  "name": "phi-plugin-astr",
+  "version": "1.0.0",
+  "main": "main.js",
+  "dependencies": {
+    "@astrbot/core": "^1.0.0",
+    "axios": "^1.6.8",
+    "chalk": "^5.3.0",
+    "canvas": "^2.11.2",
+    "jsdom": "^24.0.0",
+    "pnpm": "^9.0.0"
+  }
+}

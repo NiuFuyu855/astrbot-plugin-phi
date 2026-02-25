@@ -1,0 +1,953 @@
+import Config from '../components/Config.js'
+import send from '../model/send.js'
+import picmodle from '../model/picmodle.js'
+import getInfo from '../model/getInfo.js'
+import getSave from '../model/getSave.js'
+import fCompute from '../model/fCompute.js'
+import getBanGroup from '../model/getBanGroup.js';
+import LevelRecordInfo from '../model/class/LevelRecordInfo.js'
+import getSaveFromApi from '../model/getSaveFromApi.js'
+import phiPluginBase from '../components/baseClass.js'
+import logger from '../components/Logger.js'
+import { Level, MAX_DIFFICULTY } from '../model/constNum.js'
+import getNotes from '../model/getNotes.js'
+import getUpdateSave from '../model/getUpdateSave.js'
+import analyzeSaveHistory from '../model/analyzeSaveHistory.js'
+import ScoreHistory from '../model/class/scoreHistory.js'
+
+/**@import {botEvent} from '../components/baseClass.js' */
+
+const illList = getInfo.illlist
+export class phiuser extends phiPluginBase {
+    constructor() {
+        super({
+            name: 'phi-user',
+            dsc: 'phi-plugin数据统计',
+            event: 'message',
+            priority: 1000,
+            rule: [
+                {
+                    reg: `^[#/](${Config.getUserCfg('config', 'cmdhead')})(\\s*)(data)$`,
+                    fnc: 'data'
+                },
+                {
+                    reg: `^[#/](${Config.getUserCfg('config', 'cmdhead')})(\\s*)(info)[1-2]?.*$`,
+                    fnc: 'info'
+                },
+                {
+                    reg: `^[#/](${Config.getUserCfg('config', 'cmdhead')})(\\s*)((lvsco(re)?)|scolv)(.*)$`,
+                    fnc: 'lvscore'
+                },
+                {
+                    reg: `^[#/](${Config.getUserCfg('config', 'cmdhead')})(\\s*)list(.*)$`,
+                    fnc: 'list'
+                },
+                {
+                    reg: `^[#/](${Config.getUserCfg('config', 'cmdhead')})(\\s*)(年度总结|2025history)(.*)$`,
+                    fnc: 'analyze2025SaveHistory'
+                },
+                {
+                    reg: `^[#/](${Config.getUserCfg('config', 'cmdhead')})(\\s*)(hisb30)(.*)$`,
+                    fnc: 'hisb30'
+                }
+            ]
+        })
+
+    }
+
+    /**
+     * 查询data
+     * @param {botEvent} e
+     */
+    async data(e) {
+
+        if (await getBanGroup.get(e, 'data')) {
+            send.send_with_At(e, '这里被管理员禁止使用这个功能了呐QAQ！')
+            return false
+        }
+
+        let User = await getSave.getSave(e.user_id);
+        if (User) {
+            if (User.gameProgress) {
+                let data = User.gameProgress.money
+                send.send_with_At(e, `您的data数为：${data[4] ? `${data[4]}PB ` : ''}${data[3] ? `${data[3]}TB ` : ''}${data[2] ? `${data[2]}GB ` : ''}${data[1] ? `${data[1]}MB ` : ''}${data[0] ? `${data[0]}KB ` : ''}`)
+            } else {
+                send.send_with_At(e, `请先更新数据哦！\n/${Config.getUserCfg('config', 'cmdhead')} update`)
+            }
+        } else {
+            send.send_with_At(e, `请先绑定sessionToken哦！\n/${Config.getUserCfg('config', 'cmdhead')} bind <sessionToken>\n如果不知道自己的Token可以通过扫码绑定哦！\n如果不知道命令可以用/phihelp查看哦！`)
+        }
+        return true
+    }
+
+    /**
+     * 
+     * @param {botEvent} e
+     */
+    async info(e) {
+
+        if (await getBanGroup.get(e, 'info')) {
+            send.send_with_At(e, '这里被管理员禁止使用这个功能了呐QAQ！')
+            return false
+        }
+        /**背景 */
+        let bksong = e.msg.replace(/^.*(info)[1-2]?\s*/g, '')
+        if (bksong) {
+            let tem = getInfo.fuzzysongsnick(bksong)[0]
+            if (tem) {
+                bksong = getInfo.getill(tem)
+            } else {
+                bksong = ''
+            }
+        }
+        if (!bksong) {
+            bksong = getInfo.getill(illList[fCompute.randBetween(0, illList.length - 1)], 'blur')
+        }
+
+        let save = await send.getsave_result(e, 1.0)
+
+        if (!save) {
+            return true
+        }
+
+        let stats = await save.getStats()
+
+        let money = save.gameProgress.money
+        let userbackground = await fCompute.getBackground(save.gameuser.background)
+
+        if (!userbackground) {
+            e.reply(`ERROR: 未找到[${save.gameuser.background}]的有关信息！`)
+            logger.error(`未找到${save.gameuser.background}对应的曲绘！`)
+        }
+
+        // let dan = await getInfo.getDan(e.user_id)
+
+        let gameuser = {
+            avatar: getInfo.idgetavatar(save.gameuser.avatar),
+            ChallengeMode: Math.floor(save.saveInfo.summary.challengeModeRank / 100),
+            ChallengeModeRank: save.saveInfo.summary.challengeModeRank % 100,
+            rks: save.saveInfo.summary.rankingScore,
+            data: `${money[4] ? `${money[4]}PiB ` : ''}${money[3] ? `${money[3]}TiB ` : ''}${money[2] ? `${money[2]}GiB ` : ''}${money[1] ? `${money[1]}MiB ` : ''}${money[0] ? `${money[0]}KiB ` : ''}`,
+            selfIntro: fCompute.convertRichText(save.gameuser.selfIntro),
+            backgroundurl: userbackground,
+            PlayerId: fCompute.convertRichText(save.saveInfo.PlayerId),
+            // CLGMOD: dan?.Dan,
+            // EX: dan?.EX,
+        }
+
+        let user_data;
+
+        if (Config.getUserCfg('config', 'openPhiPluginApi')) {
+            try {
+                user_data = await getSaveFromApi.getHistory(e, ['data', 'rks', 'scoreHistory']);
+            } catch (error) {
+                logger.info('通过phi-plugin API获取历史记录失败，改为本地存储获取')
+                user_data = await getSave.getHistory(e.user_id);
+            }
+        } else {
+            user_data = await getSave.getHistory(e.user_id);
+        }
+
+        let { rks_history, data_history, rks_range, data_range, rks_date, data_date } = user_data.getRksAndDataLine()
+
+
+        /**统计在要求acc>=i的前提下，玩家的rks为多少 */
+        /**存档 */
+        let acc_rksRecord = save.getRecord()
+        /**phi列表 */
+        let acc_rks_phi = save.findAccRecord(100)
+        /**所有rks节点 */
+        let acc_rks_data = []
+        /**转换成坐标的节点 */
+        let acc_rks_data_ = []
+        /**rks上下界 */
+        let acc_rks_range = [100, 0]
+
+        /**预处理 */
+        let phi_rks = 0;
+
+        for (let i = 0; i < 3; ++i) {
+            if (acc_rks_phi[i]) {
+                phi_rks += acc_rks_phi[i].rks
+            } else {
+                break
+            }
+        }
+
+        /**原本b19中最小acc 要展示的acc序列 */
+        let acc_rks_AccRange = [100]
+
+        for (let i = 0; i < Math.min(acc_rksRecord.length, 27); i++) {
+            acc_rks_AccRange[0] = Math.min(acc_rks_AccRange[0], acc_rksRecord[i].acc)
+        }
+
+        for (let i = acc_rks_AccRange[0]; i <= 100; i += 0.01) {
+            let sum_rks = 0
+            if (!acc_rksRecord[0]) break
+            for (let j = 0; j < acc_rksRecord.length; j++) {
+                if (j >= 27) break
+                if (acc_rksRecord[j]?.acc < i) {
+                    /**预处理展示的acc数字 */
+                    acc_rks_AccRange.push(i)
+                }
+                while (acc_rksRecord[j]?.acc < i) {
+                    acc_rksRecord.splice(j, 1)
+                }
+                if (acc_rksRecord[j]) {
+                    sum_rks += acc_rksRecord[j].rks
+                } else {
+                    break
+                }
+            }
+            // console.info(acc_rksRecord[0])
+            let tem_rks = (sum_rks + phi_rks) / 30
+            acc_rks_data.push([i, tem_rks])
+            acc_rks_range[0] = Math.min(acc_rks_range[0], tem_rks)
+            acc_rks_range[1] = Math.max(acc_rks_range[1], tem_rks)
+        }
+
+        if (acc_rks_AccRange[acc_rks_AccRange.length - 1] < 100) {
+            acc_rks_AccRange.push(100)
+        }
+        // console.info(acc_rks_AccRange)
+
+        for (let i = 1; i < acc_rks_data.length; ++i) {
+            if (acc_rks_data_[0] && acc_rks_data[i - 1][1] == acc_rks_data[i][1]) {
+                acc_rks_data_[acc_rks_data_.length - 1][2] = fCompute.range(acc_rks_data[i][0], acc_rks_AccRange)
+            } else {
+                acc_rks_data_.push([fCompute.range(acc_rks_data[i - 1][0], acc_rks_AccRange), fCompute.range(acc_rks_data[i - 1][1], acc_rks_range), fCompute.range(acc_rks_data[i][0], acc_rks_AccRange), fCompute.range(acc_rks_data[i][1], acc_rks_range)])
+            }
+        }
+        // console.info(acc_rks_data_)
+
+        /**处理acc显示区间，防止横轴数字重叠 */
+        if (acc_rks_AccRange[0] == 100) {
+            acc_rks_AccRange[0] = 0
+        }
+        let acc_length = (100 - acc_rks_AccRange[0])
+        let min_acc = acc_rks_AccRange[0]
+        /**要传的数组 */
+        let acc_rks_AccRange_position = []
+        while (100 - acc_rks_AccRange[acc_rks_AccRange.length - 2] < acc_length / 10) {
+            acc_rks_AccRange.splice(acc_rks_AccRange.length - 2, 1)
+        }
+        acc_rks_AccRange_position.push([acc_rks_AccRange[0], 0])
+        for (let i = 1; i < acc_rks_AccRange.length; i++) {
+            while (acc_rks_AccRange[i] - acc_rks_AccRange[i - 1] < acc_length / 10) {
+                acc_rks_AccRange.splice(i, 1)
+            }
+            acc_rks_AccRange_position.push([acc_rks_AccRange[i], (acc_rks_AccRange[i] - min_acc) / acc_length * 100])
+        }
+        // console.info(acc_rks_AccRange_position)
+        // console.info(acc_rks_data_)
+        // console.info(acc_rks_range)
+
+        let data = {
+            gameuser: gameuser,
+            userstats: stats,
+            rks_history: rks_history,
+            data_history: data_history,
+            rks_range: rks_range,
+            data_range: data_range,
+            data_date: [fCompute.formatDate(data_date[0]), fCompute.formatDate(data_date[1])],
+            rks_date: [fCompute.formatDate(rks_date[0]), fCompute.formatDate(rks_date[1])],
+            acc_rks_data: acc_rks_data_,
+            acc_rks_range: acc_rks_range,
+            acc_rks_AccRange: acc_rks_AccRange_position,
+            background: bksong,
+        }
+
+        // console.info(acc_rks_AccRange_position)
+
+        let kind = Number(e.msg.replace(/\/.*info/g, ''))
+        send.send_with_At(e, await picmodle.user_info(e, data, kind))
+    }
+
+    /**
+     * 
+     * @param {botEvent} e
+     */
+    async lvscore(e) {
+
+        if (await getBanGroup.get(e, 'lvscore')) {
+            send.send_with_At(e, '这里被管理员禁止使用这个功能了呐QAQ！')
+            return false
+        }
+
+
+        let save = await send.getsave_result(e, 1.0)
+
+        if (!save) {
+            return true
+        }
+
+        /**匹配定数区间 */
+        let msg = e.msg.replace(/^[#/](.*?)(lvsco(re)?)(\s*)/, "")
+
+        let isask = [true, true, true, true]
+        msg = msg.toUpperCase()
+        if (msg.includes('AT') || msg.includes('IN') || msg.includes('HD') || msg.includes('EZ')) {
+            isask = [false, false, false, false]
+            if (msg.includes('EZ')) { isask[0] = true }
+            if (msg.includes('HD')) { isask[1] = true }
+            if (msg.includes('IN')) { isask[2] = true }
+            if (msg.includes('AT')) { isask[3] = true }
+        }
+        msg = msg.replace(/((\s*)|AT|IN|HD|EZ)*/g, "")
+
+        let range = [0, getInfo.MAX_DIFFICULTY]
+
+
+
+        // match_range(msg, range)
+
+        if (msg.match(/[0-9]+(.[0-9]+)?(\s*[-～~]\s*[0-9]+(.[0-9]+)?)?/g)) {
+            msg = msg.match(/[0-9]+(.[0-9]+)?(\s*[-～~]\s*[0-9]+(.[0-9]+)?)?/g)?.[0] || ''
+            if (msg.match(/[-～~]/g)) {
+
+                range = msg.split(/\s*[-～~]\s*/g)
+                range[0] = Number(range[0])
+                range[1] = Number(range[1])
+                if (range[0] > range[1]) {
+                    let tem = range[1]
+                    range[1] = range[0]
+                    range[0] = tem
+                }
+            } else {
+                range[0] = range[1] = Number(msg)
+            }
+            if (range[1] % 1 == 0 && !e.msg.includes(".0")) range[1] += 0.9
+        }
+
+
+
+        range[1] = Math.min(range[1], getInfo.MAX_DIFFICULTY)
+        range[0] = Math.max(range[0], 0)
+
+        let unlockcharts = 0
+        let totreal_score = 0
+        let totacc = 0
+        let totcharts = 0
+        let totcleared = 0
+        let totfc = 0
+        let totphi = 0
+        let tottot_score = 0
+        let tothighest = 0
+        let totlowest = 17
+        let totsongs = 0
+        let totRating = {
+            phi: 0,
+            FC: 0,
+            V: 0,
+            S: 0,
+            A: 0,
+            B: 0,
+            C: 0,
+            F: 0,
+            NEW: 0,
+        }
+        let totRank = {
+            AT: 0,
+            IN: 0,
+            HD: 0,
+            EZ: 0,
+        }
+        let unlockRank = {
+            AT: 0,
+            IN: 0,
+            HD: 0,
+            EZ: 0,
+        }
+        let unlocksongs = 0
+
+        let Record = save.gameRecord
+
+
+        for (let id of fCompute.objectKeys(getInfo.ori_info)) {
+            let info = getInfo.ori_info[id]
+            let vis = false
+            if (!info?.chart) continue
+            for (let i of Level) {
+                if (!info.chart[i]) continue
+                let difficulty = info.chart[i].difficulty
+                if (range[0] <= difficulty && difficulty <= range[1] && isask[Level.indexOf(i)]) {
+                    ++totcharts
+                    ++totRank[i]
+                    if (!vis) {
+                        ++totsongs
+                        vis = true
+                    }
+                }
+            }
+        }
+
+
+        for (let id of fCompute.objectKeys(Record)) {
+            let info = getInfo.info(id, true)
+            let record = Record[id]
+            let vis = false
+            if (!info?.chart) continue
+            for (let lv in [0, 1, 2, 3]) {
+                const levelName = Level[lv];
+                if (!info.chart[levelName]) continue
+                let difficulty = info.chart[levelName].difficulty
+                if (range[0] <= difficulty && difficulty <= range[1] && isask[lv]) {
+
+                    if (!record[lv]) continue
+
+                    ++unlockcharts
+                    ++unlockRank[levelName]
+
+                    if (!vis) {
+                        ++unlocksongs
+                        vis = true
+                    }
+                    if (record[lv].score >= 700000) {
+                        ++totcleared
+                    }
+                    if (record[lv].fc || record[lv].score == 1000000) {
+                        ++totfc
+                    }
+                    if (record[lv].score == 1000000) {
+                        ++totphi
+                    }
+                    ++totRating[record[lv].Rating]
+                    totacc += record[lv].acc
+                    totreal_score += record[lv].score
+                    tottot_score += 1000000
+
+                    tothighest = Math.max(record[lv].rks, tothighest)
+                    totlowest = Math.min(record[lv].rks, totlowest)
+                }
+            }
+        }
+
+        let illustration = await fCompute.getBackground(save.gameuser.background)
+
+        if (!illustration) {
+            e.reply(`ERROR: 未找到[${save.gameuser.background}]背景的有关信息！`)
+            logger.error(`未找到${save.gameuser.background}的曲绘！`)
+        }
+
+        let data = {
+            tot: {
+                at: totRank.AT,
+                in: totRank.IN,
+                hd: totRank.HD,
+                ez: totRank.EZ,
+                songs: totsongs,
+                charts: totcharts,
+                score: tottot_score,
+            },
+            real: {
+                at: unlockRank.AT,
+                in: unlockRank.IN,
+                hd: unlockRank.HD,
+                ez: unlockRank.EZ,
+                songs: unlocksongs,
+                charts: unlockcharts,
+                score: totreal_score,
+            },
+            rating: {
+                ...totRating,
+                tot: Rate(totreal_score, tottot_score, totfc == totcharts),
+            },
+            range: {
+                bottom: range[0],
+                top: range[1],
+                left: range[0] / MAX_DIFFICULTY * 100,
+                length: (range[1] - range[0]) / MAX_DIFFICULTY * 100
+            },
+            illustration: illustration,
+            highest: tothighest,
+            lowest: totlowest,
+            tot_cleared: totcleared,
+            tot_fc: totfc,
+            tot_phi: totphi,
+            tot_acc: (totacc / totcharts),
+            date: fCompute.formatDate(save.saveInfo.modifiedAt.iso),
+            progress_phi: Number((totphi / totcharts * 100).toFixed(2)),
+            progress_fc: Number((totfc / totcharts * 100).toFixed(2)),
+            avatar: getInfo.idgetavatar(save.gameuser.avatar),
+            ChallengeMode: Math.floor(save.saveInfo.summary.challengeModeRank / 100),
+            ChallengeModeRank: save.saveInfo.summary.challengeModeRank % 100,
+            rks: save.saveInfo.summary.rankingScore,
+            PlayerId: fCompute.convertRichText(save.saveInfo.PlayerId),
+            background: getInfo.getill(illList[fCompute.randBetween(0, illList.length - 1)], 'blur'),
+        }
+
+        // let remsg = ''
+        // remsg += `\n${range[0]}-${range[1]} `
+        // remsg += `clear:${totcleared} fc:${totfc} phi:${totphi}\n`
+        // remsg += `${progress_bar(totphi / totcharts, 30)} ${totphi}/${totcharts}\n`
+        // remsg += `Tot: ${unlockcharts}/${totcharts} acc: ${(totacc / totcharts).toFixed(4)}\n`
+        // remsg += `score: ${totreal_score}/${tottot_score}\n`
+        // remsg += `highest: ${tothighest.toFixed(4)} lowest:${totlowest.toFixed(4)}\n`
+        // remsg += `φ:${totRating['phi']} FC:${totRating['FC']} V:${totRating['V']} S:${totRating['S']} A:${totRating['A']} B:${totRating['B']} C:${totRating['C']} F:${totRating['F']}`
+
+
+        send.send_with_At(e, await picmodle.lvsco(e, data))
+    }
+
+    /**
+     * 
+     * @param {botEvent} e
+     */
+    async list(e) {
+
+        if (await getBanGroup.get(e, 'list')) {
+            send.send_with_At(e, '这里被管理员禁止使用这个功能了呐QAQ！')
+            return false
+        }
+
+
+        let save = await send.getsave_result(e)
+
+        if (!save) {
+            return true
+        }
+
+        const dif_range = [0, getInfo.MAX_DIFFICULTY];
+        const acc_range = [0, 100];
+
+        /** @type {string} */
+        let msg = e.msg.replace(/^[#/](.*?)list/, "")
+
+        /**EZ HD IN AT */
+        let isask = [true, true, true, true]
+
+        msg = msg.toUpperCase()
+
+        const accStr = msg.match(/-ACC\s*\d+(\.\d+)?(\s*[-～~]\s*\d+(\.\d+)?|\s*[+-])?/i)?.[0];
+        if (accStr) {
+            fCompute.match_range(accStr, acc_range);
+            msg = msg.replace(accStr, '');
+        }
+
+        const difStr = msg.match(/(-DIF)?\s*\d+(\.\d+)?(\s*[-～~]\s*\d+(\.\d+)?|\s*[+-])?/i)?.[0];
+        if (difStr) {
+            fCompute.match_range(difStr, dif_range);
+            msg = msg.replace(difStr, '');
+        }
+
+        if (msg.includes('EZ') || msg.includes('HD') || msg.includes('IN') || msg.includes('AT')) {
+            isask = [false, false, false, false]
+            if (msg.includes('EZ')) { isask[0] = true }
+            if (msg.includes('HD')) { isask[1] = true }
+            if (msg.includes('IN')) { isask[2] = true }
+            if (msg.includes('AT')) { isask[3] = true }
+        }
+        msg = msg.replace(/(list|AT|IN|HD|EZ)*/g, "");
+
+        let scoreAsk = { NEW: true, F: true, C: true, B: true, A: true, S: true, V: true, FC: true, PHI: true };
+        const selectedTags = msg.match(/\b(?:NEW|F|C|B|A|S|V|FC|PHI|AP)\b/g);
+        if (selectedTags) {
+            scoreAsk = { NEW: false, F: false, C: false, B: false, A: false, S: false, V: false, FC: false, PHI: false };
+            for (const tag of selectedTags) {
+                const key = tag === 'AP' ? 'PHI' : tag;
+                // @ts-ignore
+                scoreAsk[key] = true;
+            }
+        }
+        msg = msg.replace(/\b(?:NEW|F|C|B|A|S|V|FC|PHI|AP)\b/g, "");
+
+
+        let Record = save.gameRecord
+
+        let data = []
+
+        for (let id of fCompute.objectKeys(Record)) {
+            let song = getInfo.idgetsong(id)
+            if (!song) {
+                logger.warn('[phi-plugin]', id, '曲目无信息')
+                continue
+            }
+            let info = getInfo.info(id, true)
+
+            let record = Record[id]
+
+            for (let lv of [0, 1, 2, 3]) {
+                const levelName = Level[lv];
+                if (!info?.chart[levelName]) continue
+                let difficulty = info.chart[levelName].difficulty
+                if (!(dif_range[0] <= difficulty && difficulty <= dif_range[1] && isask[lv]))
+                    continue;
+                if (!record[lv]) {
+                    if (!scoreAsk.NEW || acc_range[0] != 0)
+                        continue;
+                    else
+                        // @ts-ignore
+                        record[lv] = {}
+                } else {
+                    // @ts-ignore
+                    if (record[lv] && !scoreAsk[record[lv].Rating.toUpperCase()])
+                        continue;
+                    if (!(acc_range[0] <= record[lv].acc && record[lv].acc <= acc_range[1]))
+                        continue;
+                }
+                // @ts-ignore
+                record[lv].suggest = save.getSuggest(id, lv, 4, difficulty);
+                data.push({
+                    ...record[lv],
+                    ...info,
+                    illustration: getInfo.getill(id, 'low'),
+                    difficulty: difficulty,
+                    rank: Level[lv]
+                });
+            }
+        }
+
+        if (data.length > Config.getUserCfg('config', 'listScoreMaxNum')) {
+            send.send_with_At(e, `谱面数量过多(${data.length})大于设置的最大值(${Config.getUserCfg('config', 'listScoreMaxNum')})，请缩小搜索范围QAQ！`)
+            return true
+        }
+
+        data.sort((a, b) => {
+            return (b.difficulty || 0) - (a.difficulty || 0)
+        })
+
+        let plugin_data = await getNotes.getNotesData(e.user_id)
+
+        //逻辑暂未实现
+        let request = []
+        request.push(`定数 ${dif_range[0]}-${dif_range[1]}`);
+        request.push(`ACC ${acc_range[0]}-${acc_range[1]}`);
+
+
+        send.send_with_At(e, await picmodle.list(e, {
+            head_title: "成绩筛选",
+            song: data,
+            background: getInfo.getill(illList[fCompute.randBetween(0, illList.length - 1)]),
+            theme: plugin_data?.theme || 'star',
+            PlayerId: save.saveInfo.PlayerId,
+            Rks: Number(save.saveInfo.summary.rankingScore).toFixed(4),
+            Date: save.saveInfo.summary.updatedAt,
+            ChallengeMode: Math.floor(save.saveInfo.summary.challengeModeRank / 100),
+            ChallengeModeRank: save.saveInfo.summary.challengeModeRank % 100,
+            // dan: await get.getDan(e.user_id),
+            request: request
+        }))
+
+    }
+
+    /**
+     * 
+     * @param {botEvent} e 
+     */
+    async analyze2025SaveHistory(e) {
+
+
+        if (await getBanGroup.get(e, 'analyze2025SaveHistory')) {
+            send.send_with_At(e, '这里被管理员禁止使用这个功能了呐QAQ！')
+            return false
+        }
+
+
+        let save = await send.getsave_result(e)
+
+        if (!save) {
+            return true
+        }
+
+        const history = await getUpdateSave.getHistoryFromApi(e, ['challengeModeRank', 'data', 'rks', 'scoreHistory']);
+
+        if (!history) {
+            return true;
+        }
+
+        const stats = analyzeSaveHistory(history);
+
+        send.send_with_At(e, await picmodle.analyzeSaveHistory(e, {
+            stats,
+            background: getInfo.getill(getInfo.illlist[fCompute.randBetween(0, getInfo.illlist.length - 1)]),
+        }));
+    }
+
+    /**
+     * 
+     * @param {botEvent} e 
+     * @returns 
+     */
+    async hisb30(e) {
+        if (await getBanGroup.get(e, 'hisb30')) {
+            send.send_with_At(e, '这里被管理员禁止使用这个功能了呐QAQ！')
+            return false
+        }
+
+        const save = await send.getsave_result(e)
+
+        if (!save) {
+            return true
+        }
+
+        const history = await getUpdateSave.getHistoryFromApi(e, ['scoreHistory']);
+
+        if (!history) {
+            return true;
+        }
+
+        const { scoreHistory } = history;
+
+        const records = [];
+
+        for (const ids of fCompute.objectKeys(scoreHistory)) {
+            const songRecords = scoreHistory[ids];
+            for (const level of Level) {
+                const levelRecords = songRecords[level];
+                if (!levelRecords) continue;
+                for (const record of levelRecords) {
+                    const openedRecord = ScoreHistory.open(record);
+                    records.push({
+                        id: ids,
+                        level: level,
+                        ...openedRecord
+                    });
+                }
+            }
+        }
+
+        /**@type {Record<string, LevelRecordInfo[]>} */
+        const timeKeyRecords = {}
+
+        for (const record of records) {
+            if (!timeKeyRecords[`${record.date.getTime()}`]) {
+                timeKeyRecords[`${record.date.getTime()}`] = [];
+            }
+            timeKeyRecords[`${record.date.getTime()}`].push(new LevelRecordInfo(record, record.id, Level.indexOf(record.level)));
+        }
+
+        const times = fCompute.objectKeys(timeKeyRecords)
+
+        times.sort((a, b) => Number(a) - Number(b));
+
+        /**@type {Record<'phi' | 'b27', LevelRecordInfo[]>} */
+        let b30List = {
+            phi: [],
+            b27: [],
+        }
+
+        /**@typedef {LevelRecordInfo & {newPhi?: number, newB27?: number, exitPhi?: boolean, exitB27?: boolean}} b30ChangeResult*/
+
+        /**@type {Record<string, b30ChangeResult[]>} */
+        const changeB30Result = {};
+
+        for (const time of times) {
+            /**维护 time 对应时间戳的变化情况 */
+
+            /**所有新成绩 */
+            const records = timeKeyRecords[time];
+
+            /**加入后新B30 */
+            const newB30List = fCompute.updateB30(b30List, records);
+
+            /**旧的keys */
+            const oldPhiCharts = b30List.phi.map(item => `${item.id}-${item.rank}`);
+            const oldB27Charts = b30List.b27.map(item => `${item.id}-${item.rank}`);
+
+            /**新的keys */
+            const newPhiCharts = newB30List.phi.map(item => `${item.id}-${item.rank}`);
+            const newB27Charts = newB30List.b27.map(item => `${item.id}-${item.rank}`);
+
+            /**@type {b30ChangeResult[]} 新的phi成绩*/
+            const newPhi = [];
+            /**@type {b30ChangeResult[]} 新的b27成绩*/
+            const newB27 = [];
+
+            newB30List.phi.forEach((item, index) => {
+                if (!oldPhiCharts.includes(`${item.id}-${item.rank}`)) {
+                    newPhi.push({ ...item, newPhi: index + 1 });
+                }
+            });
+
+            newB30List.b27.forEach((item, index) => {
+                if (!oldB27Charts.includes(`${item.id}-${item.rank}`)) {
+                    newB27.push({ ...item, newB27: index + 1 });
+                }
+            });
+
+            /**@type {Record<string, b30ChangeResult>} */
+            const newPhiVis = {};
+            /**@type { b30ChangeResult[]} 合并后新的phi成绩*/
+            const newPhiResult = []
+            /**@type { b30ChangeResult[]} 合并后新的b27成绩*/
+            const newB27Result = []
+
+            /**先标记phi，优先合并到phi上 */
+            newPhi.forEach(item => {
+                newPhiVis[`${item.id}-${item.rank}`] = item;
+            });
+
+            /**b27中有的合并到phi上 */
+            newB27.forEach(item => {
+                const key = `${item.id}-${item.rank}`;
+                if (newPhiCharts.includes(key)) {
+                    newPhiVis[key].newB27 = item.newB27;
+                    return;
+                }
+                newB27Result.push(item);
+            });
+
+            /**合并后的新的phi成绩 */
+            for (const key of fCompute.objectKeys(newPhiVis)) {
+                newPhiResult.push(newPhiVis[key]);
+            }
+
+            /**退出的成绩，逻辑同上 */
+
+            /**@type {b30ChangeResult[]} */
+            const exitPhi = [];
+            /**@type {b30ChangeResult[]} */
+            const exitB27 = [];
+
+            b30List.phi.forEach(item => {
+                if (!newPhiCharts.includes(`${item.id}-${item.rank}`)) {
+                    exitPhi.push({ ...item, exitPhi: true });
+                }
+            });
+
+            b30List.b27.forEach(item => {
+                if (!newB27Charts.includes(`${item.id}-${item.rank}`)) {
+                    exitB27.push({ ...item, exitB27: true });
+                }
+            });
+
+            /**@type {Record<string, b30ChangeResult>} */
+            const exitPhiVis = {};
+            /**@type { b30ChangeResult[]} */
+            const exitPhiResult = [];
+            /**@type { b30ChangeResult[]} */
+            const exitB27Result = [];
+
+            exitPhi.forEach(item => {
+                exitPhiVis[`${item.id}-${item.rank}`] = item;
+            });
+
+            exitB27.forEach(item => {
+                const key = `${item.id}-${item.rank}`;
+                if (newB27Charts.includes(key)) {
+                    exitPhiVis[key].exitB27 = item.exitB27;
+                    return;
+                }
+                exitB27Result.push(item);
+            });
+
+            for (const key of fCompute.objectKeys(exitPhiVis)) {
+                exitPhiResult.push(exitPhiVis[key]);
+            }
+
+            if (newPhiResult.length + newB27Result.length + exitPhiResult.length + exitB27Result.length > 0) {
+                changeB30Result[time] = [
+                    ...newPhiResult,
+                    ...newB27Result,
+                    ...exitPhiResult,
+                    ...exitB27Result,
+                ];
+            }
+
+
+            b30List = newB30List;
+
+        }
+
+        /**
+         * @typedef {object} hisb30Songs
+         * @property {string} ill 曲绘
+         * @property {string} rank 难度
+         * @property {number} [newPhi] 新φ30排名
+         * @property {number} [newB27] 新b27排名
+         * @property {boolean} [exitPhi] 退出φ30
+         * @property {boolean} [exitB27] 退出b27
+         */
+
+        /**
+         * @type {object[]}
+         * @property {string} date 时间
+         * @property {string} color 颜色
+         * @property {hisb30Songs[]} songs 变化内容
+         */
+        const rows = [];
+
+        times.reverse().forEach(time => {
+            if (changeB30Result[time]) {
+                const date = fCompute.formatDate(Number(time));
+
+                /** @type {hisb30Songs[]} */
+                const songs = [];
+                changeB30Result[time].forEach(item => {
+                    songs.push({
+                        ill: getInfo.getill(item.id, 'low'),
+                        rank: item.rank,
+                        newPhi: item.newPhi,
+                        newB27: item.newB27,
+                        exitPhi: item.exitPhi,
+                        exitB27: item.exitB27,
+                    });
+                });
+                rows.push({
+                    date,
+                    songs,
+                    color: fCompute.getRandomBgColor(),
+                });
+            }
+        })
+
+        const pluginData = await getNotes.getNotesData(e.user_id);
+
+        // let dan = await get.getDan(e.user_id)
+        const money = save.gameProgress?.money || [0, 0, 0, 0, 0]
+        const gameuser = {
+            avatar: getInfo.idgetavatar(save.gameuser.avatar),
+            ChallengeMode: Math.floor(save.saveInfo.summary.challengeModeRank / 100),
+            ChallengeModeRank: save.saveInfo.summary.challengeModeRank % 100,
+            rks: save.saveInfo.summary.rankingScore,
+            data: `${money[4] ? `${money[4]}PiB ` : ''}${money[3] ? `${money[3]}TiB ` : ''}${money[2] ? `${money[2]}GiB ` : ''}${money[1] ? `${money[1]}MiB ` : ''}${money[0] ? `${money[0]}KiB ` : ''}`,
+            selfIntro: save.gameuser.selfIntro,
+            backgroundUrl: await fCompute.getBackground(save.gameuser.background),
+            PlayerId: fCompute.convertRichText(save.saveInfo.PlayerId),
+            // dan: dan,
+        }
+
+        send.send_with_At(e, await picmodle.common(e, 'historyB30', {
+            gameuser,
+            rows,
+            background: getInfo.getill(illList[fCompute.randBetween(0, illList.length - 1)]),
+            theme: pluginData?.theme || 'star',
+        }))
+
+    }
+
+
+
+}
+
+/**
+ * 
+ * @param {number} real_score 真实成绩
+ * @param {number} tot_score 总成绩
+ * @param {boolean} fc 是否fc
+ * @returns 
+ */
+function Rate(real_score, tot_score, fc) {
+
+    if (!real_score) {
+        return 'F'
+    } else if (real_score == tot_score) {
+        return 'phi'
+    } else if (fc) {
+        return 'FC'
+    } else if (real_score >= tot_score * 0.96) {
+        return 'V'
+    } else if (real_score >= tot_score * 0.92) {
+        return 'S'
+    } else if (real_score >= tot_score * 0.88) {
+        return 'A'
+    } else if (real_score >= tot_score * 0.82) {
+        return 'B'
+    } else if (real_score >= tot_score * 0.70) {
+        return 'C'
+    } else {
+        return 'F'
+    }
+}
+
+
