@@ -1,0 +1,22 @@
+name: phi
+version: 1.0.0
+description: Phigros 信息查询插件，支持查询分数等信息统计，以及猜曲目等小游戏
+author: Catrong
+repository: https://github.com/Catrong/phi-plugin
+license: MIT
+
+# 插件指令信息
+commands:
+  - name: phi
+    description: Phigros 信息查询插件主指令
+    usage: /phi <子命令> [参数]
+    examples:
+      - /phi help
+      - /phi bind <sessionToken>
+      - /phi rks
+
+# 插件依赖
+dependencies:
+  - requests
+  - pyyaml
+  - Pillow
