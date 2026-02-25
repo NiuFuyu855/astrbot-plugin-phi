@@ -51,111 +51,162 @@ class PhiPlugin(Star):
         args = message.split()
         
         if len(args) < 2:
-            await self.phi_help(event)
+            async for result in self.phi_help(event):
+                yield result
             return
         
         sub_cmd = args[1].lower()
         
         if sub_cmd in ["help", "帮助"]:
-            await self.phi_help(event)
+            async for result in self.phi_help(event):
+                yield result
         elif sub_cmd in ["bind", "绑定"]:
-            await self.phi_bind(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_bind(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["unbind", "解绑"]:
-            await self.phi_unbind(event)
+            async for result in self.phi_unbind(event):
+                yield result
         elif sub_cmd in ["clean"]:
-            await self.phi_clean(event)
+            async for result in self.phi_clean(event):
+                yield result
         elif sub_cmd in ["update", "更新存档"]:
-            await self.phi_update(event)
+            async for result in self.phi_update(event):
+                yield result
         elif sub_cmd in ["rks", "pgr", "b30"]:
-            await self.phi_rks(event)
+            async for result in self.phi_rks(event):
+                yield result
         elif sub_cmd in ["x30"]:
-            await self.phi_x30(event)
+            async for result in self.phi_x30(event):
+                yield result
         elif sub_cmd in ["fc30"]:
-            await self.phi_fc30(event)
+            async for result in self.phi_fc30(event):
+                yield result
         elif sub_cmd in ["info"]:
-            await self.phi_info(event, args[2] if len(args) > 2 else "")
+            async for result in self.phi_info(event, args[2] if len(args) > 2 else ""):
+                yield result
         elif sub_cmd in ["lmtacc"]:
-            await self.phi_lmtacc(event, args[2] if len(args) > 2 else "")
+            async for result in self.phi_lmtacc(event, args[2] if len(args) > 2 else ""):
+                yield result
         elif sub_cmd in ["lvscore", "scolv"]:
-            await self.phi_lvscore(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_lvscore(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["chap"]:
-            await self.phi_chap(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_chap(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["list"]:
-            await self.phi_list(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_list(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["hisb30"]:
-            await self.phi_hisb30(event)
+            async for result in self.phi_hisb30(event):
+                yield result
         elif sub_cmd in ["best1"]:
-            await self.phi_best1(event, args[2] if len(args) > 2 else "")
+            async for result in self.phi_best1(event, args[2] if len(args) > 2 else ""):
+                yield result
         elif sub_cmd in ["score", "单曲成绩"]:
-            await self.phi_score(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_score(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["suggest", "推分"]:
-            await self.phi_suggest(event)
+            async for result in self.phi_suggest(event):
+                yield result
         elif sub_cmd in ["ranklist", "排行榜"]:
-            await self.phi_ranklist(event, args[2] if len(args) > 2 else "")
+            async for result in self.phi_ranklist(event, args[2] if len(args) > 2 else ""):
+                yield result
         elif sub_cmd in ["rankfind"]:
-            await self.phi_rankfind(event, args[2] if len(args) > 2 else "")
+            async for result in self.phi_rankfind(event, args[2] if len(args) > 2 else ""):
+                yield result
         elif sub_cmd in ["data"]:
-            await self.phi_data(event)
+            async for result in self.phi_data(event):
+                yield result
         elif sub_cmd in ["guess", "猜曲绘"]:
-            await self.phi_guess(event)
+            async for result in self.phi_guess(event):
+                yield result
         elif sub_cmd in ["ltr", "开字母"]:
-            await self.phi_ltr(event)
+            async for result in self.phi_ltr(event):
+                yield result
         elif sub_cmd in ["tipgame", "提示猜曲"]:
-            await self.phi_tipgame(event)
+            async for result in self.phi_tipgame(event):
+                yield result
         elif sub_cmd in ["song", "曲"]:
-            await self.phi_song(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_song(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["chart"]:
-            await self.phi_chart(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_chart(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["tag"]:
-            await self.phi_tag(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_tag(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["settag"]:
-            await self.phi_settag(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_settag(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["comment", "cmt", "评论", "评价"]:
-            await self.phi_comment(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_comment(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["recmt"]:
-            await self.phi_recmt(event, args[2] if len(args) > 2 else "")
+            async for result in self.phi_recmt(event, args[2] if len(args) > 2 else ""):
+                yield result
         elif sub_cmd in ["mycmt"]:
-            await self.phi_mycmt(event)
+            async for result in self.phi_mycmt(event):
+                yield result
         elif sub_cmd in ["table", "定数表"]:
-            await self.phi_table(event, args[2] if len(args) > 2 else "")
+            async for result in self.phi_table(event, args[2] if len(args) > 2 else ""):
+                yield result
         elif sub_cmd in ["new"]:
-            await self.phi_new(event)
+            async for result in self.phi_new(event):
+                yield result
         elif sub_cmd in ["tips"]:
-            await self.phi_tips(event)
+            async for result in self.phi_tips(event):
+                yield result
         elif sub_cmd in ["jrrp"]:
-            await self.phi_jrrp(event)
+            async for result in self.phi_jrrp(event):
+                yield result
         elif sub_cmd in ["alias"]:
-            await self.phi_alias(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_alias(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["rand", "随机"]:
-            await self.phi_rand(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_rand(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["randclg"]:
-            await self.phi_randclg(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_randclg(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["曲绘", "ill", "Ill"]:
-            await self.phi_ill(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_ill(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["search", "查询", "检索"]:
-            await self.phi_search(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_search(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["theme"]:
-            await self.phi_theme(event, args[2] if len(args) > 2 else "")
+            async for result in self.phi_theme(event, args[2] if len(args) > 2 else ""):
+                yield result
         elif sub_cmd in ["sign", "签到"]:
-            await self.phi_sign(event)
+            async for result in self.phi_sign(event):
+                yield result
         elif sub_cmd in ["task", "我的任务"]:
-            await self.phi_task(event)
+            async for result in self.phi_task(event):
+                yield result
         elif sub_cmd in ["retask", "刷新任务"]:
-            await self.phi_retask(event)
+            async for result in self.phi_retask(event):
+                yield result
         elif sub_cmd in ["send", "送", "转"]:
-            await self.phi_send(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_send(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["backup"]:
-            await self.phi_backup(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_backup(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["restore"]:
-            await self.phi_restore(event)
+            async for result in self.phi_restore(event):
+                yield result
         elif sub_cmd in ["设置别名", "setnick"]:
-            await self.phi_setnick(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_setnick(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["删除别名", "delnick"]:
-            await self.phi_delnick(event, args[2:] if len(args) > 2 else [])
+            async for result in self.phi_delnick(event, args[2:] if len(args) > 2 else []):
+                yield result
         elif sub_cmd in ["强制", "qz", "更新", "gx"]:
-            await self.phi_force_update(event)
+            async for result in self.phi_force_update(event):
+                yield result
         else:
-            await self.phi_help(event)
+            async for result in self.phi_help(event):
+                yield result
     
     async def phi_help(self, event: AstrMessageEvent):
         """获取帮助"""
