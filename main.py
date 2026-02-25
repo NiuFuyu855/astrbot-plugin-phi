@@ -15,7 +15,7 @@ from .components.Version import Version
 from .model.constNum import APIBASEURL
 from .model.getInfo import getInfo
 
-@register("phi", "Catrong", "Phigros 信息查询插件，支持查询分数等信息统计，以及猜曲目等小游戏", Version.ver, "https://github.com/Catrong/phi-plugin")
+@register("astrbot-plugin-phi", "NiuFuyu855 & Catrong", "Phigros 信息查询插件，支持查询分数等信息统计，以及猜曲目等小游戏", Version.ver, "https://github.com/NiuFuyu855/astrbot-plugin-phi")
 class PhiPlugin(Star):
     def __init__(self, context: Context):
         super().__init__(context)
